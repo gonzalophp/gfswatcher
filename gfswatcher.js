@@ -186,7 +186,12 @@ var watcher = {
                             },
                             function(cb2){
                                 if (sync[k].shell) {
-                                    child = watcher.app.modules.childProcess.exec(sync[k].shell, {maxBuffer:10000*1024});
+                                    var shellCommand = watcher.parseTemplate(sync[k].shell , sync[k]);
+                                    if (sync[k].shell.error) {
+                                        console.log("Placeholder (\"" + sync[k].shell.error + "\") undefined for source \"" + sync[k].source + "\"");
+                                        process.exit(1);
+                                    }
+                                    child = watcher.app.modules.childProcess.exec(shellCommand, {maxBuffer:10000*1024});
                                     child.on('close', function() {cb2(null)});
 
                                     if (child.stdout) child.stdout.pipe(process.stdout);
@@ -246,7 +251,7 @@ var watcher = {
         hash = watcher.app.modules.crypto.createHash('sha256').update(path).digest('hex');
 
         var event = this.grouped ? null : {
-            e: (dirDeleted||fileDeleted) ? 'deleted' : ((e=='rename') ? 'created' : 'changed'),
+            type: (dirDeleted||fileDeleted) ? 'deleted' : ((e=='rename') ? 'created' : 'changed'),
             path:path,
             isDir:isDir
         };
@@ -291,7 +296,7 @@ var watcher = {
             return obj[key];
         }
     },
-    replacePlaceHolders:function(template, obj, ignore){
+    parseTemplate:function(template, obj){
         var matches = template.match(/({{[^\s]+}})/g),
             placeholders = {},
             phValue;
@@ -299,9 +304,6 @@ var watcher = {
         if (matches) {
             for (var n=0; n<matches.length; n++) {
                 var match = matches[n].replace(/{{(.*)}}/,"$1");
-                if (match.indexOf(ignore)===0) {
-                    continue;
-                }
 
                 try {
                     phValue = watcher.getObjectValue(obj, match);
@@ -317,7 +319,7 @@ var watcher = {
             }
 
             for (var k in placeholders) {
-                template = template.replace(new RegExp("{{" + k + "}}"), placeholders[k]);
+                template = template.replace(new RegExp("{{" + k + "}}",'g'), placeholders[k]);
             }
         }
 
@@ -334,14 +336,6 @@ var watcher = {
                 dirs = watcher.walkSync(sync.source, {"dirs":true});
 
             console.log('Watching', sync.source);
-
-            if (sync.shell) {
-                sync.shell = watcher.replacePlaceHolders(sync.shell , sync, 'event');
-                if (sync.shell.error) {
-                    console.log("Placeholder (\"" + sync.shell.error + "\") undefined for source \"" + sync.source + "\"");
-                    process.exit(1);
-                }
-            }
 
             dirs.push(sync.source);
             for (j=0; j<dirs.length; j++) {

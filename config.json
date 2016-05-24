@@ -4,7 +4,7 @@
         {
             "source":"/path/dir",
             "js":"function(){console.log('EXAMPLE OF CALLBACK', this.source, this.event.path);};",
-            "shell":"echo SOURCE: {{source}}",
+            "shell":"echo SOURCE: {{event.isDir}} {{source}} {{event.type}} {{event.path}} {{event.isDir}}",
             "grouped":false
         }
     ]
