@@ -1,0 +1,29 @@
+{
+  "name": "gfswatcher",
+  "version": "0.0.8",
+  "description": "fs event watcher",
+  "main": "gfswatcher.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "gfswatcher": "./gfswatcher.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gonzalophp/gfswatcher"
+  },
+  "keywords": [
+    "watch"
+  ],
+  "author": "Gonzalo Grado Vivero",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gonzalophp/gfswatcher"
+  },
+  "dependencies": {
+    "async": "^2.0.0-rc.4",
+    "crypto": "0.0.3",
+    "yargs": "^4.7.0"
+  }
+}

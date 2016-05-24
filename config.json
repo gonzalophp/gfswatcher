@@ -1,0 +1,11 @@
+{
+    "interval":1000,
+    "sync": [
+        {
+            "source":"/path/dir",
+            "js":"function(){console.log('EXAMPLE OF CALLBACK', this.source, this.event.path);};",
+            "shell":"echo SOURCE: {{source}}",
+            "grouped":false
+        }
+    ]
+}
