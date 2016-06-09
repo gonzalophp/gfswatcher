@@ -4,7 +4,7 @@
   "description": "fs event watcher",
   "main": "gfswatcher.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"No test specified yet\" && exit 0"
   },
   "bin": {
     "gfswatcher": "./gfswatcher.js"
@@ -25,5 +25,8 @@
     "async": "^2.0.0-rc.4",
     "crypto": "0.0.3",
     "yargs": "^4.7.0"
+  },
+  "devDependencies": {
+    "jasmine": "^2.4.1"
   }
 }

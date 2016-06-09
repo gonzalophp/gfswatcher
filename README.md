@@ -1,3 +1,5 @@
+[![Build Status: Linux](https://api.travis-ci.org/gonzalophp/gfswatcher.svg?branch=master)](https://travis-ci.org/gonzalophp/gfswatcher)
+
 # gfswatcher
 > A recursive directory watcher running shell commands
 
