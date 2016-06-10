@@ -1,17 +1,33 @@
 [![Build Status: Linux](https://api.travis-ci.org/gonzalophp/gfswatcher.svg?branch=master)](https://travis-ci.org/gonzalophp/gfswatcher)
 
 # gfswatcher
-> A recursive directory watcher running shell commands
+> Directory watcher
 
 ## Usage
 
 ```shell
-gfswatcher --config <filename>
+gfswatcher-cli --config <filename>
 ```
 
 ## Config file
 
-**Many local sources to many remote docker containers:**
+**Simple example**
+
+```json
+{
+    "interval":1000,
+    "sync": [
+        {
+            "source":"/home/user/path/project1",
+            "cmd":"echo {{event.type}} -- {{event.path}}",
+            "grouped":false
+        }
+    ]
+}
+```
+
+
+**A more complex configuration for Docker environments. Many local sources to many remote docker containers:**
 
 ```json
 {

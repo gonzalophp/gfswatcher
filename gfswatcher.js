@@ -1,8 +1,6 @@
-#!/usr/bin/env node
-
 'use strict';
 
-var watcher = {
+var gfswatcher = {
     app:{
         modules:{},
         settings:{},
@@ -17,7 +15,7 @@ var watcher = {
         }
     },
     initializeModules:function(){
-        watcher.app.modules = {
+        gfswatcher.app.modules = {
             yargs:require('yargs'),
             path:require('path'),
             fs:require('fs'),
@@ -27,42 +25,46 @@ var watcher = {
         };
     },
     walkSync:function(dir, opts, filelist) {
-        var fs = watcher.app.modules.fs,
+        var fs = gfswatcher.app.modules.fs,
             filelist = (filelist || []),
-            ps = watcher.app.modules.path.sep;
-
+            ps = gfswatcher.app.modules.path.sep;
         try {
             fs.statSync(dir);
-        } catch (e) {
-            console.log('Source directory not found: ', dir);
+        } catch (e1) {
+            throw new Error('Source directory not found: ' + dir);
+        }
+
+        try{
+            fs.readdirSync(dir).forEach(function(dirEntry) {
+                try {
+                    var stat = fs.lstatSync(dir + ps + dirEntry);
+                    if (!stat.isSymbolicLink() && stat.isDirectory()) {
+                        filelist = gfswatcher.walkSync(dir + ps + dirEntry, opts, filelist);
+                        if (opts.dirs) {
+                            filelist.push(dir + ps + dirEntry);
+                        }
+                    }
+                    else {
+                        if (!opts.dirs) {
+                            filelist.push(dir + dirEntry);
+                        }
+                    }
+                }
+                catch(e2) {
+                }
+            });
+        } catch (e1) {
+            console.log('Cannot find path: ', dir);
             process.exit(1);
         }
 
-        fs.readdirSync(dir).forEach(function(file) {
-            try {
-                var stat = fs.lstatSync(dir + ps + file);
-                if (!stat.isSymbolicLink() && stat.isDirectory()) {
-                    filelist = watcher.walkSync(dir + ps + file, opts, filelist);
-                    if (opts.dirs) {
-                        filelist.push(dir + ps + file);
-                    }
-                }
-                else {
-                    if (!opts.dirs) {
-                        filelist.push(dir + file);
-                    }
-                }
-            }
-            catch(e) {
-            }
-        });
         return filelist;
     },
     buildSettings:function() {
-        var argv = watcher.app.modules.yargs.argv,
-            fs = watcher.app.modules.fs,
-            settings = watcher.app.settings,
-            ps=watcher.app.modules.path.sep;
+        var argv = gfswatcher.app.modules.yargs.argv,
+            fs = gfswatcher.app.modules.fs,
+            settings = gfswatcher.app.settings,
+            ps=gfswatcher.app.modules.path.sep;
 
         var config;
         settings.config = config;
@@ -82,14 +84,14 @@ var watcher = {
             settings.sync.push({source:source});
         } else {
             if (config && config.sync && (config.sync.length > 0)) {
-                var js, shell, opts;
+                var js, cmd, opts;
                 for (var i=0; i<config.sync.length; i++) {
                     if (!config.sync[i].source) {
                         console.log("Source not defined ", config.sync[i]);
                         process.exit(1);
                     }
 
-                    shell = (config.sync[i].shell) ? config.sync[i].shell : null;
+                    cmd = (config.sync[i].cmd) ? config.sync[i].cmd : null;
                     opts = (config.sync[i].opts) ? config.sync[i].opts : null;
 
                     if (config.sync[i].js) {
@@ -100,8 +102,8 @@ var watcher = {
                             process.exit(1);
                         }
                     } else {
-                        if(!shell) {
-                            console.log("Some kind of action (js callback/shell command) must be defined for source (" + config.sync[i].source + ")");
+                        if(!cmd) {
+                            console.log("Some kind of action (js callback/cmd command) must be defined for source (" + config.sync[i].source + ")");
                             process.exit(1);
                         }
                         js=function(){}
@@ -110,7 +112,7 @@ var watcher = {
                     settings.sync.push({
                         source: config.sync[i].source,
                         js: js,
-                        shell: shell,
+                        cmd: cmd,
                         opts:opts,
                         grouped:(config.sync[i].grouped!=undefined)?config.sync[i].grouped:false});
                 }
@@ -122,10 +124,10 @@ var watcher = {
         settings.interval = argv.interval ? argv.interval : ((config && config.interval) ? config.interval : 2000);
     },
     swapBuffers:function() {
-        var nextInputBuffer = watcher.app.status.processBuffer;
+        var nextInputBuffer = gfswatcher.app.status.processBuffer;
 
-        watcher.app.status.processBuffer = watcher.app.status.inputBuffer;
-        watcher.app.status.inputBuffer = nextInputBuffer;
+        gfswatcher.app.status.processBuffer = gfswatcher.app.status.inputBuffer;
+        gfswatcher.app.status.inputBuffer = nextInputBuffer;
     },
     log2:function(error, stdout, stderr){
         if (stdout) {
@@ -133,27 +135,27 @@ var watcher = {
         }
     },
     processModified:function() {
-        if(watcher.app.status.processing){
-            setTimeout(watcher.processModified, watcher.app.settings.interval);
+        if(gfswatcher.app.status.processing){
+            setTimeout(gfswatcher.processModified, gfswatcher.app.settings.interval);
             return;
         }
-        watcher.swapBuffers();
+        gfswatcher.swapBuffers();
 
-        var m = watcher.app.status.modifiedFiles[watcher.app.status.processBuffer],
-            a = watcher.app.modules.async,
+        var m = gfswatcher.app.status.modifiedFiles[gfswatcher.app.status.processBuffer],
+            a = gfswatcher.app.modules.async,
             fw, sync={}, k;
         if (Object.keys(m).length>0) {
-            watcher.app.status.processing = true;
+            gfswatcher.app.status.processing = true;
 
             for (k in m) {
                 fw = m[k].fsWatcher;
                 if (m[k].isDir) {
                     if (!m[k].deleted) {
-                        watcher.createWatchMonitor(
+                        gfswatcher.createWatchMonitor(
                                 m[k].path,
                                 fw.source,
                                 fw.js,
-                                fw.shell,
+                                fw.cmd,
                                 fw.opts,
                                 fw.grouped);
                     }
@@ -185,13 +187,13 @@ var watcher = {
                                 cb2(null);
                             },
                             function(cb2){
-                                if (sync[k].shell) {
-                                    var shellCommand = watcher.parseTemplate(sync[k].shell , sync[k]);
-                                    if (sync[k].shell.error) {
-                                        console.log("Placeholder (\"" + sync[k].shell.error + "\") undefined for source \"" + sync[k].source + "\"");
+                                if (sync[k].cmd) {
+                                    var cmdCommand = gfswatcher.parseTemplate(sync[k].cmd , sync[k]);
+                                    if (sync[k].cmd.error) {
+                                        console.log("Placeholder (\"" + sync[k].cmd.error + "\") undefined for source \"" + sync[k].source + "\"");
                                         process.exit(1);
                                     }
-                                    child = watcher.app.modules.childProcess.exec(shellCommand, {maxBuffer:10000*1024});
+                                    child = gfswatcher.app.modules.childProcess.exec(cmdCommand, {maxBuffer:10000*1024});
                                     child.on('close', function() {cb2(null)});
 
                                     if (child.stdout) child.stdout.pipe(process.stdout);
@@ -209,18 +211,18 @@ var watcher = {
                     cb1(null);
                 },
                 function(cb1) {
-                    watcher.app.status.modifiedFiles[watcher.app.status.processBuffer]={};
-                    watcher.app.status.processing = false;
+                    gfswatcher.app.status.modifiedFiles[gfswatcher.app.status.processBuffer]={};
+                    gfswatcher.app.status.processing = false;
                     cb1(null);
                 }
             ]);
         }
 
-        setTimeout(watcher.processModified, watcher.app.settings.interval);
+        setTimeout(gfswatcher.processModified, gfswatcher.app.settings.interval);
     },
     markModified:function(e, f) {
-        var fs = watcher.app.modules.fs,
-            ps = watcher.app.modules.path.sep,
+        var fs = gfswatcher.app.modules.fs,
+            ps = gfswatcher.app.modules.path.sep,
             isDir = false,
             fileDeleted = false,
             dirDeleted = false,
@@ -248,7 +250,7 @@ var watcher = {
             return;
         }
 
-        hash = watcher.app.modules.crypto.createHash('sha256').update(path).digest('hex');
+        hash = gfswatcher.app.modules.crypto.createHash('sha256').update(path).digest('hex');
 
         var event = this.grouped ? null : {
             type: (dirDeleted||fileDeleted) ? 'deleted' : ((e=='rename') ? 'created' : 'changed'),
@@ -256,28 +258,28 @@ var watcher = {
             isDir:isDir
         };
 
-        watcher.app.status.modifiedFiles[watcher.app.status.inputBuffer][hash]={
+        gfswatcher.app.status.modifiedFiles[gfswatcher.app.status.inputBuffer][hash]={
             path:path,
             deleted:(dirDeleted||fileDeleted),
             isDir:isDir,
             fsWatcher:{
                 source:this.source,
                 js:this.js,
-                shell:this.shell,
+                cmd:this.cmd,
                 opts:this.opts,
                 grouped:this.grouped,
                 event:event
             }
         };
     },
-    createWatchMonitor: function(dir,source,js,shell,opts,grouped) {
-        var fs = watcher.app.modules.fs,
+    createWatchMonitor: function(dir,source,js,cmd,opts,grouped) {
+        var fs = gfswatcher.app.modules.fs,
             fsOptions = {},
-            w = fs.watch(dir, fsOptions, watcher.markModified);
+            w = fs.watch(dir, fsOptions, gfswatcher.markModified);
         w.dir = dir;
         w.source = source;
         w.js = js;
-        w.shell = shell;
+        w.cmd = cmd;
         w.opts = opts;
         w.grouped = grouped;
     },
@@ -290,7 +292,7 @@ var watcher = {
             keyArray.shift();
             newKey = keyArray.join('.');
 
-            return watcher.getObjectValue(newObj,newKey);
+            return gfswatcher.getObjectValue(newObj,newKey);
         }
         else {
             return obj[key];
@@ -306,7 +308,7 @@ var watcher = {
                 var match = matches[n].replace(/{{(.*)}}/,"$1");
 
                 try {
-                    phValue = watcher.getObjectValue(obj, match);
+                    phValue = gfswatcher.getObjectValue(obj, match);
                 } catch(e) {
                     console.log("Error: cannot parse {{"+match+"}} for source ("+obj.source+")");
                     process.exit(1);
@@ -326,23 +328,24 @@ var watcher = {
         return template;
     },
     init:function(){
-        watcher.initializeModules();
-        watcher.buildSettings();
+        gfswatcher.initializeModules();
+        gfswatcher.buildSettings();
 
         var i, j;
-        for (i=0; i<watcher.app.settings.sync.length; i++) {
+        for (i=0; i<gfswatcher.app.settings.sync.length; i++) {
 
-            var sync = watcher.app.settings.sync[i],
-                dirs = watcher.walkSync(sync.source, {"dirs":true});
+            var sync = gfswatcher.app.settings.sync[i],
+                dirs = gfswatcher.walkSync(sync.source, {"dirs":true});
 
             console.log('Watching', sync.source);
 
             dirs.push(sync.source);
             for (j=0; j<dirs.length; j++) {
-                watcher.createWatchMonitor(dirs[j], sync.source, sync.js, sync.shell, sync.opts, sync.grouped);
+                gfswatcher.createWatchMonitor(dirs[j], sync.source, sync.js, sync.cmd, sync.opts, sync.grouped);
             }
         }
-        setTimeout(watcher.processModified, watcher.app.settings.interval);
+        setTimeout(gfswatcher.processModified, gfswatcher.app.settings.interval);
     }
 };
-watcher.init();
+
+exports.gfswatcher = gfswatcher;
