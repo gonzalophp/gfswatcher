@@ -35,7 +35,7 @@ gfswatcher-cli --config <filename>
     "sync": [
         {
             "source":"/home/user/path/project1",
-            "shell":"rsync -e \"docker exec -i\"  {{opts.rsync}} {{source}}/. CONTAINER1:/home/sites/dir; rsync -e \"docker exec -i\" {{opts.rsync}} {{source}}/. CONTAINER2:/home/sites/dir",
+            "cmd":"rsync -e \"docker exec -i\"  {{opts.rsync}} {{source}}/. CONTAINER1:/home/sites/dir; rsync -e \"docker exec -i\" {{opts.rsync}} {{source}}/. CONTAINER2:/home/sites/dir",
             "opts":{
               "rsync":"--blocking-io -avz --delete --no-perms --no-owner --no-group --exclude-from=\"{{source}}/.dockerignore\" --exclude-from=\"{{source}}/.gitignore\" --exclude=\"{{source}}/web/images/upload\" --checksum --no-times --itemize-changes"
             },
@@ -43,7 +43,7 @@ gfswatcher-cli --config <filename>
         },
         {
             "source":"/home/user/path/project2",
-            "shell":"rsync -e \"docker exec -i\" {{opts.rsync}} {{source}}/. CONTAINER1:/home/sites/dir/vendor/brand/project; rsync -e \"docker exec -i\" {{opts.rsync}} {{source}}/. CONTAINER2:/home/sites/dir/vendor/brand/project",
+            "cmd":"rsync -e \"docker exec -i\" {{opts.rsync}} {{source}}/. CONTAINER1:/home/sites/dir/vendor/brand/project; rsync -e \"docker exec -i\" {{opts.rsync}} {{source}}/. CONTAINER2:/home/sites/dir/vendor/brand/project",
             "opts":{
               "rsync":"--blocking-io -avz --delete --no-perms --no-owner --no-group --exclude-from=\"{{source}}/.dockerignore\" --exclude-from=\"{{source}}/.gitignore\" --exclude=\"{{source}}/web/images/upload\" --checksum --no-times --itemize-changes"
             },
