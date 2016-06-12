@@ -1,22 +1,17 @@
 {
   "name": "gfswatcher",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "fs event watcher",
   "main": "gfswatcher.js",
   "scripts": {
     "start": "node gfswatcher.js",
     "test": "node_modules/mocha/bin/mocha"
   },
-  "bin": {
-    "gfswatcher": "./gfswatcher.js"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gonzalophp/gfswatcher"
   },
-  "keywords": [
-    "watch"
-  ],
+  "keywords": ["gfswatcher", "docker", "watcher", "fs", "watch"],
   "author": "Gonzalo Grado Vivero",
   "license": "ISC",
   "bugs": {

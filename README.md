@@ -3,12 +3,6 @@
 # gfswatcher
 > Directory watcher
 
-## Usage
-
-```shell
-gfswatcher-cli --config <filename>
-```
-
 ## Config file
 
 **Simple example**
