@@ -7,7 +7,7 @@ describe('walkSync', function(){
 
     var path=require('path'),
         fs = require('fs'),
-        gfswatcher = require('../gfswatcher').gfswatcher,
+        gfswatcher = require('../gfswatcher'),
         getPathString = function(p) {return path.sep + p.join(path.sep);};
 
     beforeEach(function(){

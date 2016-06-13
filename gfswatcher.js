@@ -330,7 +330,9 @@ var gfswatcher = {
     init:function(){
         gfswatcher.initializeModules();
         gfswatcher.buildSettings();
-
+    },
+    watch:function(){
+        gfswatcher.init();
         var i, j;
         for (i=0; i<gfswatcher.app.settings.sync.length; i++) {
 
@@ -348,4 +350,4 @@ var gfswatcher = {
     }
 };
 
-exports.gfswatcher = gfswatcher;
+module.exports = gfswatcher;
