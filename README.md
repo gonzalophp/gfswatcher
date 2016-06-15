@@ -1,7 +1,9 @@
 [![Build Status: Linux](https://api.travis-ci.org/gonzalophp/gfswatcher.svg?branch=master)](https://travis-ci.org/gonzalophp/gfswatcher)
 
 # gfswatcher
-> Directory watcher
+> Directory watcher module
+
+Command line utility for this module: <a href="https://www.npmjs.com/package/gfswatcher-cli">gfswatcher-cli</a>
 
 ## Config file
 
