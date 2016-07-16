@@ -16,6 +16,7 @@ Command line utility for this module: <a href="https://www.npmjs.com/package/gfs
         {
             "source":"/home/user/path/project1",
             "cmd":"echo {{event.type}} -- {{event.path}}",
+            "initCmd":"echo This shell command is executed only once for the sync rule of source: {{source}}",
             "grouped":false
         }
     ]
