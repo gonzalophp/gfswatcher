@@ -114,7 +114,9 @@ var gfswatcher = {
                         js: js,
                         cmd: cmd,
                         opts:opts,
-                        grouped:(config.sync[i].grouped!=undefined)?config.sync[i].grouped:false});
+                        grouped:(config.sync[i].grouped==true),
+                        initCmd:(config.sync[i].initCmd!=undefined)?config.sync[i].initCmd:false
+                    });
                 }
             } else {
                 settings.sync.push({source:process.cwd()});
@@ -133,6 +135,15 @@ var gfswatcher = {
         if (stdout) {
             console.log(stdout.replace("\\n","\n"));
         }
+    },
+    executeCmd:function(cmd, sync, cb) {
+        var cmdCommand = gfswatcher.parseTemplate(cmd , sync),
+            child;
+        child = gfswatcher.app.modules.childProcess.exec(cmdCommand, {maxBuffer:10000*1024});
+        child.on('close', function() {cb(null)});
+
+        if (child.stdout) child.stdout.pipe(process.stdout);
+        if (child.stderr) child.stderr.pipe(process.stdout);
     },
     processModified:function() {
         if(gfswatcher.app.status.processing){
@@ -174,7 +185,6 @@ var gfswatcher = {
             a.series([
                 function(cb1){
                     for (k in sync) {
-                        var child;
                         a.series([
                             function(cb2){
                                 if (sync[k].js) {
@@ -188,17 +198,7 @@ var gfswatcher = {
                             },
                             function(cb2){
                                 if (sync[k].cmd) {
-                                    var cmdCommand = gfswatcher.parseTemplate(sync[k].cmd , sync[k]);
-                                    if (sync[k].cmd.error) {
-                                        console.log("Placeholder (\"" + sync[k].cmd.error + "\") undefined for source \"" + sync[k].source + "\"");
-                                        process.exit(1);
-                                    }
-                                    child = gfswatcher.app.modules.childProcess.exec(cmdCommand, {maxBuffer:10000*1024});
-                                    child.on('close', function() {cb2(null)});
-
-                                    if (child.stdout) child.stdout.pipe(process.stdout);
-                                    if (child.stderr) child.stderr.pipe(process.stdout);
-
+                                    gfswatcher.executeCmd(sync[k].cmd, sync[k], cb2);
                                 } else {
                                     cb2(null);
                                 }
@@ -333,18 +333,30 @@ var gfswatcher = {
     },
     watch:function(){
         gfswatcher.init();
-        var i, j;
+        var i, j, a = gfswatcher.app.modules.async;
         for (i=0; i<gfswatcher.app.settings.sync.length; i++) {
+            var sync, dirs;
+            a.series([
+                function(cb1) {
+                    sync = gfswatcher.app.settings.sync[i];
+                    dirs = gfswatcher.walkSync(sync.source, {"dirs":true});
 
-            var sync = gfswatcher.app.settings.sync[i],
-                dirs = gfswatcher.walkSync(sync.source, {"dirs":true});
+                    console.log('Watching', sync.source);
 
-            console.log('Watching', sync.source);
-
-            dirs.push(sync.source);
-            for (j=0; j<dirs.length; j++) {
-                gfswatcher.createWatchMonitor(dirs[j], sync.source, sync.js, sync.cmd, sync.opts, sync.grouped);
-            }
+                    dirs.push(sync.source);
+                    for (j=0; j<dirs.length; j++) {
+                        gfswatcher.createWatchMonitor(dirs[j], sync.source, sync.js, sync.cmd, sync.opts, sync.grouped);
+                    }
+                    cb1(null);
+                },
+                function(cb1) {
+                    if (sync.initCmd) {
+                        gfswatcher.executeCmd(sync.initCmd, sync, cb1);
+                    } else {
+                        cb1(null);
+                    }
+                }
+            ]);
         }
         setTimeout(gfswatcher.processModified, gfswatcher.app.settings.interval);
     }
